@@ -20,7 +20,7 @@ namespace KTC.Domain
 
         private void Update()
         {
-            if (_gameFlowController != null && _gameFlowController.IsGameOver)
+            if (_gameFlowController != null && (_gameFlowController.IsGameOver || _gameFlowController.IsCountingDown))
             {
                 return;
             }
@@ -33,7 +33,7 @@ namespace KTC.Domain
 
         private void FixedUpdate()
         {
-            if (_gameFlowController != null && _gameFlowController.IsGameOver)
+            if (_gameFlowController != null && (_gameFlowController.IsGameOver || _gameFlowController.IsCountingDown))
             {
                 Vector3 stopVelocity = new Vector3(0.0f, _rigidbody.linearVelocity.y, 0.0f);
                 _rigidbody.linearVelocity = stopVelocity;

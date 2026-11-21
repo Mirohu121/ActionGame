@@ -9,11 +9,13 @@ namespace KTC.Domain
     {
         [SerializeField] private GameFlowController _gameFlowController = null;
         [SerializeField] private Transform _cameraTransform = null;
+        [SerializeField] private ParticleSystem _goalEffect = null;
         [SerializeField] private float _outOfBoundsXOffset = ConstGame.OUT_OF_BOUNDS_X_OFFSET;
         [SerializeField] private float _outOfBoundsMinY = ConstGame.OUT_OF_BOUNDS_MIN_Y;
 
         private Rigidbody _rigidbody = null;
         private bool _isGrounded = false;
+        private bool _hasTriggeredGoal = false;
 
         private void Awake()
         {
@@ -23,8 +25,7 @@ namespace KTC.Domain
 
         private void Update()
         {
-         
-            if (_gameFlowController != null && (_gameFlowController.IsGameOver || _gameFlowController.IsCountingDown))
+            if (_gameFlowController != null && (_gameFlowController.IsCountingDown || _gameFlowController.IsGameEnded))
             {
                 return;
             }
@@ -39,8 +40,7 @@ namespace KTC.Domain
 
         private void FixedUpdate()
         {
-            if (_gameFlowController != null && (_gameFlowController.IsGameOver || _gameFlowController.IsCountingDown))
-
+            if (_gameFlowController != null && (_gameFlowController.IsCountingDown || _gameFlowController.IsGameEnded))
             {
                 Vector3 stopVelocity = new Vector3(0.0f, _rigidbody.linearVelocity.y, 0.0f);
                 _rigidbody.linearVelocity = stopVelocity;
@@ -49,6 +49,12 @@ namespace KTC.Domain
 
             Vector3 currentVelocity = _rigidbody.linearVelocity;
             currentVelocity.x = ConstGame.MOVE_SPEED;
+
+            if (currentVelocity.y < 0.0f)
+            {
+                currentVelocity.y -= ConstGame.FALL_ACCELERATION * Time.fixedDeltaTime;
+            }
+
             _rigidbody.linearVelocity = currentVelocity;
         }
 
@@ -66,10 +72,7 @@ namespace KTC.Domain
         {
             if (other.gameObject.CompareTag(ConstGame.TAG_GOAL))
             {
-                if (_gameFlowController != null)
-                {
-                    _gameFlowController.TriggerWinner();
-                }
+                HandleGoalReached();
             }
         }
 
@@ -77,10 +80,28 @@ namespace KTC.Domain
         {
             if (collision.gameObject.CompareTag(ConstGame.TAG_GOAL))
             {
-                if (_gameFlowController != null)
-                {
-                    _gameFlowController.TriggerWinner();
-                }
+                HandleGoalReached();
+            }
+        }
+
+        private void HandleGoalReached()
+        {
+            if (_hasTriggeredGoal)
+            {
+                return;
+            }
+
+            _hasTriggeredGoal = true;
+
+            if (_goalEffect != null)
+            {
+                _goalEffect.transform.position = transform.position;
+                _goalEffect.Play();
+            }
+
+            if (_gameFlowController != null)
+            {
+                _gameFlowController.TriggerWinner();
             }
         }
 

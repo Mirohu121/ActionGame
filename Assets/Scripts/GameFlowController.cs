@@ -12,8 +12,10 @@ namespace KTC.Scene
         [SerializeField] private TMP_Text _statusText = null;
         [SerializeField] private TMP_Text _countdownText = null;
         [SerializeField] private GameObject _gameOverPanel = null;
+        [SerializeField] private GameObject _winnerPanel = null;
 
         private bool _isGameOver = false;
+        private bool _isWinner = false;
         private bool _isCountingDown = true;
 
         public bool IsGameOver
@@ -21,9 +23,19 @@ namespace KTC.Scene
             get { return _isGameOver; }
         }
 
+        public bool IsWinner
+        {
+            get { return _isWinner; }
+        }
+
         public bool IsCountingDown
         {
             get { return _isCountingDown; }
+        }
+
+        public bool IsGameEnded
+        {
+            get { return _isGameOver || _isWinner; }
         }
 
         private void Start()
@@ -42,7 +54,7 @@ namespace KTC.Scene
 
         public void TriggerGameOver()
         {
-            if (_isGameOver)
+            if (IsGameEnded)
             {
                 return;
             }
@@ -60,6 +72,26 @@ namespace KTC.Scene
             }
         }
 
+        public void TriggerWinner()
+        {
+            if (IsGameEnded)
+            {
+                return;
+            }
+
+            _isWinner = true;
+
+            if (_winnerPanel != null)
+            {
+                _winnerPanel.SetActive(true);
+            }
+
+            if (_statusText != null)
+            {
+                _statusText.text = string.Format(ConstGame.VIEW_WINNER);
+            }
+        }
+
         public void Retry()
         {
             UnityEngine.SceneManagement.Scene currentScene = SceneManager.GetActiveScene();
@@ -69,11 +101,17 @@ namespace KTC.Scene
         private void SetInitialState()
         {
             _isGameOver = false;
+            _isWinner = false;
             _isCountingDown = true;
 
             if (_gameOverPanel != null)
             {
                 _gameOverPanel.SetActive(false);
+            }
+
+            if (_winnerPanel != null)
+            {
+                _winnerPanel.SetActive(false);
             }
 
             if (_countdownText != null)

@@ -8,6 +8,9 @@ namespace KTC.Domain
     public class PlayerController : MonoBehaviour
     {
         [SerializeField] private GameFlowController _gameFlowController = null;
+        [SerializeField] private Transform _cameraTransform = null;
+        [SerializeField] private float _outOfBoundsXOffset = ConstGame.OUT_OF_BOUNDS_X_OFFSET;
+        [SerializeField] private float _outOfBoundsMinY = ConstGame.OUT_OF_BOUNDS_MIN_Y;
 
         private Rigidbody _rigidbody = null;
         private bool _isGrounded = false;
@@ -20,10 +23,12 @@ namespace KTC.Domain
 
         private void Update()
         {
-            if (_gameFlowController != null && _gameFlowController.IsGameOver)
+            if (_gameFlowController != null && (_gameFlowController.IsCountingDown || _gameFlowController.IsGameEnded))
             {
                 return;
             }
+
+            CheckOutOfBounds();
 
             if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame && _isGrounded)
             {
@@ -33,7 +38,7 @@ namespace KTC.Domain
 
         private void FixedUpdate()
         {
-            if (_gameFlowController != null && _gameFlowController.IsGameOver)
+            if (_gameFlowController != null && (_gameFlowController.IsCountingDown || _gameFlowController.IsGameEnded))
             {
                 Vector3 stopVelocity = new Vector3(0.0f, _rigidbody.linearVelocity.y, 0.0f);
                 _rigidbody.linearVelocity = stopVelocity;
@@ -55,14 +60,42 @@ namespace KTC.Domain
             _isGrounded = false;
         }
 
-        private void OnCollisionEnter(Collision collision)
+        private void OnTriggerEnter(Collider other)
         {
-            if (collision.gameObject.CompareTag(ConstGame.TAG_OBSTACLE))
+            if (other.gameObject.CompareTag(ConstGame.TAG_GOAL))
             {
                 if (_gameFlowController != null)
                 {
-                    _gameFlowController.TriggerGameOver();
+                    _gameFlowController.TriggerWinner();
                 }
+            }
+        }
+
+        private void OnCollisionEnter(Collision collision)
+        {
+            if (collision.gameObject.CompareTag(ConstGame.TAG_GOAL))
+            {
+                if (_gameFlowController != null)
+                {
+                    _gameFlowController.TriggerWinner();
+                }
+            }
+        }
+
+        private void CheckOutOfBounds()
+        {
+            if (_gameFlowController == null || _cameraTransform == null)
+            {
+                return;
+            }
+
+            float leftLimitX = _cameraTransform.position.x + _outOfBoundsXOffset;
+            bool isOutsideLeft = transform.position.x < leftLimitX;
+            bool isFallenBelow = transform.position.y < _outOfBoundsMinY;
+
+            if (isOutsideLeft || isFallenBelow)
+            {
+                _gameFlowController.TriggerGameOver();
             }
         }
 
